@@ -1,14 +1,19 @@
+const mongoose = require("../../util/mongoose");
 const Course = require("../model/Course");
 
 class SiteController {
   // [GET] /search
-  async index(req, res) {
-    try {
-      const data = await Course.find({});
-      res.json(data);
-    } catch (error) {
-      res.status(400).json(error);
-    }
+  async index(req, res, next) {
+    Course.find({})
+      .then((courses) => {
+        // solve access denied error of handlebars when render
+        res.render("home", {
+          courses: mongoose.multipleMongooseToObject(courses),
+        });
+      })
+      .catch(next);
+    // throw error to middleware
+
     // res.render("home");
   }
 
