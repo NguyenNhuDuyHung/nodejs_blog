@@ -1,7 +1,7 @@
 <div class="mt-4 container">
   <div class="">
-  <h3>Danh sách khóa học</h3>
-    <a href="/me/trash/courses" class="btn btn-primary">Xem khóa học đã xoá ({{{count}}})</a>
+    <a href="/me/stored/courses" class="btn btn-primary">Quay lại</a>
+    <h3>Danh sách khóa học đã xoá</h3>
   </div>
   <table class="table table-hover mt-4">
     <thead>
@@ -20,23 +20,21 @@
           <td>{{this.createdAt}}</td>
           <td>{{this.updatedAt}}</td>
           <td>
-            <a href="/courses/{{this._id}}/edit" class="btn btn-primary">Sửa</a>
+            <a class="btn-restore" data-id="{{this._id}}" href="">Khôi phục</a>
           </td>
           <td>
             <a
               href="#"
-              class="btn btn-primary"
               data-bs-toggle="modal"
               data-bs-target="#deleteCourseModal"
               data-id="{{this._id}}"
-            >Xóa</a>
+            >Xóa vĩnh viễn</a>
           </td>
         </tr>
 
       {{else}}
         <tr>
-          <td colspan="6" class="text-center">Bạn chưa đăng khóa học nào.
-            <a href="/courses/create" style="text-decoration: none;">Đăng khóa học</a>
+          <td colspan="6" class="text-center">Bạn chưa xóa khóa học nào.
           </td>
         </tr>
 
@@ -44,6 +42,7 @@
     </tbody>
   </table>
 </div>
+
 
 {{! Confirm delete }}
 <div
@@ -56,7 +55,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Xóa khóa học?</h5>
+        <h5 class="modal-title" id="exampleModalLabel">Xóa vĩnh viễn?</h5>
         <button
           type="button"
           class="btn-close"
@@ -65,7 +64,7 @@
         ></button>
       </div>
       <div class="modal-body">
-        <p>Bạn có chắc chắn muốn xóa khóa học này?</p>
+        <p>Hành động này không thể khôi phục! Bạn vẫn muốn xóa?</p>
       </div>
       <div class="modal-footer">
         <button
@@ -79,11 +78,21 @@
   </div>
 </div>
 
-{{!-- Delete hidden form --}}
+{{!-- Hidden form --}}
 <form name="deleteCourseForm"  method="POST"></form>
+<form name="restoreCourseForm" method="POST"></form>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
+    var restoreBtn = $('.btn-restore');
+    var restoreForm = document.forms["restoreCourseForm"];
+    restoreBtn.click((e) => {
+        e.preventDefault();
+        var courseId = e.target.dataset.id;
+        restoreForm.action = "/courses/" + courseId + "/restore?_method=PATCH";
+        restoreForm.submit();
+    })
+
     var courseId;
     var deleteForm = document.forms["deleteCourseForm"];
     $('#deleteCourseModal').on('show.bs.modal', function (event) {
@@ -94,7 +103,7 @@
 
     var btnDeleteCourseModal = document.getElementById("btnDeleteCourseModal");
     btnDeleteCourseModal.addEventListener("click", function () {
-      deleteForm.action = "/courses/" + courseId + "?_method=DELETE";
+      deleteForm.action = "/courses/" + courseId + "/force?_method=DELETE";
       deleteForm.submit();
     })
   })
