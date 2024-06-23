@@ -1,20 +1,44 @@
-<div class="mt-4 container">
+<form class="mt-4 container" method="POST" action="/me/trash/handle-form-actions">
   <div class="">
     <a href="/me/stored/courses" class="btn btn-primary">Quay lại</a>
     <h3>Danh sách khóa học đã xoá</h3>
   </div>
-  <table class="table table-hover mt-4">
-    <thead>
-      <tr>
-        <th scope="col">#</th>
-        <th scope="col">Tên khóa học</th>
-        <th scope="col">Thời gian tạo</th>
-        <th scope="col" colspan="3">Thời gian chỉnh sửa</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#each courses}}
+
+  <div class="mt-4 d-flex align-items-center gap-3">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="checkbox-all">
+      <label class="form-check-label" for="checkbox-all">
+        Chọn tất cả
+      </label>
+    </div>
+
+    <select class="form-select-sm" aria-label="Default select example" name="action" required>
+      <option value="">Chọn hành động</option>
+      <option value="restore">Khôi phục</option>
+      <option value="delete">Xóa vĩnh viễn</option>
+    </select>
+
+    <button class="btn btn-primary btn-sm btn-action disabled" type="submit">Thực hiện</button>
+  </div>
+
+  <div class="mt-4 d-flex align-items-center gap-3">
+    <table class="table table-hover mt-4">
+      <thead>
         <tr>
+          <th scope="col">#</th>
+          <th scope="col">Tên khóa học</th>
+          <th scope="col">Thời gian tạo</th>
+          <th scope="col" colspan="4">Thời gian chỉnh sửa</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each courses}}
+        <tr>
+          <td>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="courseIds[]" value="{{this._id}}">
+            </div>
+          </td>
           <th scope="row">{{sum @index 1}}</th>
           <td>{{this.name}}</td>
           <td>{{this.createdAt}}</td>
@@ -23,55 +47,37 @@
             <a class="btn-restore" data-id="{{this._id}}" href="">Khôi phục</a>
           </td>
           <td>
-            <a
-              href="#"
-              data-bs-toggle="modal"
-              data-bs-target="#deleteCourseModal"
-              data-id="{{this._id}}"
-            >Xóa vĩnh viễn</a>
+            <a href="#" data-bs-toggle="modal" data-bs-target="#deleteCourseModal" data-id="{{this._id}}">Xóa vĩnh
+              viễn</a>
           </td>
         </tr>
 
-      {{else}}
+        {{else}}
         <tr>
           <td colspan="6" class="text-center">Bạn chưa xóa khóa học nào.
           </td>
         </tr>
 
-      {{/each}}
-    </tbody>
-  </table>
-</div>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</form>
 
 
 {{! Confirm delete }}
-<div
-  class="modal fade"
-  id="deleteCourseModal"
-  tabindex="-1"
-  aria-labelledby="exampleModalLabel"
-  aria-hidden="true"
->
+<div class="modal fade" id="deleteCourseModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="exampleModalLabel">Xóa vĩnh viễn?</h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Close"
-        ></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <p>Hành động này không thể khôi phục! Bạn vẫn muốn xóa?</p>
       </div>
       <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          data-bs-dismiss="modal"
-        >Đóng</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
         <button id="btnDeleteCourseModal" type="button" class="btn btn-primary">Xóa</button>
       </div>
     </div>
@@ -79,7 +85,7 @@
 </div>
 
 {{!-- Hidden form --}}
-<form name="deleteCourseForm"  method="POST"></form>
+<form name="deleteCourseForm" method="POST"></form>
 <form name="restoreCourseForm" method="POST"></form>
 
 <script>
@@ -87,10 +93,10 @@
     var restoreBtn = $('.btn-restore');
     var restoreForm = document.forms["restoreCourseForm"];
     restoreBtn.click((e) => {
-        e.preventDefault();
-        var courseId = e.target.dataset.id;
-        restoreForm.action = "/courses/" + courseId + "/restore?_method=PATCH";
-        restoreForm.submit();
+      e.preventDefault();
+      var courseId = e.target.dataset.id;
+      restoreForm.action = "/courses/" + courseId + "/restore?_method=PATCH";
+      restoreForm.submit();
     })
 
     var courseId;
@@ -106,5 +112,46 @@
       deleteForm.action = "/courses/" + courseId + "/force?_method=DELETE";
       deleteForm.submit();
     })
+
+    var btnDeleteCourseModal = document.getElementById("btnDeleteCourseModal");
+    btnDeleteCourseModal.addEventListener("click", function () {
+      deleteForm.action = "/courses/" + courseId + "?_method=DELETE";
+      deleteForm.submit();
+    })
+
+    var checkboxAll = document.getElementById("checkbox-all");
+    var checkboxes = document.getElementsByName("courseIds[]");
+    checkboxAll.addEventListener("change", function () {
+      var isCheckedAll = checkboxAll.checked;
+      for (var i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = isCheckedAll;
+      }
+      renderBtnAction()
+    })
+
+    checkboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", function () {
+        var isCheckedAll = false;
+        for (var i = 0; i < checkboxes.length; i++) {
+          if (!checkboxes[i].checked) {
+            isCheckedAll = false;
+            break;
+          }
+          isCheckedAll = true;
+        }
+        checkboxAll.checked = isCheckedAll;
+        renderBtnAction();
+      })
+    })
+
+    var btnAction = document.querySelector('.btn-action');
+    function renderBtnAction() {
+      var countCheckedBoxes = document.querySelectorAll('input[name="courseIds[]"]:checked').length;
+      if (countCheckedBoxes > 0) {
+        btnAction.classList.remove('disabled')
+      } else {
+        btnAction.classList.add('disabled')
+      }
+    }
   })
 </script>
