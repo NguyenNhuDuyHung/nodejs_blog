@@ -20,7 +20,7 @@ class CourseController {
 
   // [POST] /courses/store
   store(req, res, next) {
-    const formData = {...req.body};
+    const formData = { ...req.body };
     console.log(formData);
     const course = new Course(formData);
     course
@@ -66,6 +66,20 @@ class CourseController {
     Course.deleteOne({ _id: req.params.id })
       .then(() => res.redirect("back"))
       .catch(next);
+  }
+
+  // [POST] /courses/handle-form-action
+  handleFormActions(req, res, next) {
+    switch (req.body.action) {
+      case "delete":
+        Course.delete({ _id: { $in: req.body.courseIds } })  // { $in: [1, 2, 3] }
+          .then(() => res.redirect("back"))
+          .catch(next);
+        break;
+
+      default:
+        res.json({ message: "Action is invalid" }); 
+    }
   }
 }
 module.exports = new CourseController();
